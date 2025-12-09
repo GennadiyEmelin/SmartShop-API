@@ -18,12 +18,13 @@ namespace TestASP.Models
 
         // Foreign Key
         public int? CategoryId { get; set; }
-        public Category? Category { get; set; }
+        public Category? Category { get; private set; }
 
-        public Product(string name, decimal price)
+        public Product(string name, decimal price, int category)
         {
             Name = name;
             Price = price;
+            CategoryId = category;
         }
 
         private Product() { } // For EF Core

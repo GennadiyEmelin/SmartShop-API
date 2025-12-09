@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using TestASP.Contracts;
 using TestASP.Models;
 
@@ -13,9 +12,9 @@ namespace TestASP.Services
             _db = db;
         }
 
-        public async Task<Product> AddProductAsync(string name, decimal price)
+        public async Task<Product> AddProductAsync(string name, decimal price, int categoryId)
         {
-            var product = new Product(name, price);
+            var product = new Product(name, price, categoryId);
             try
             {
                 await _db.Products.AddAsync(product);
@@ -30,7 +29,7 @@ namespace TestASP.Services
 
         public async Task<List<Product>> GetAllProductsAsync()
         {
-            return await _db.Products.ToListAsync<Product>();  
+            return await _db.Products.Include(p => p.Category).ToListAsync();
         }
 
         public async Task<Product?> GetProductByIdAsync(int id)
@@ -38,7 +37,7 @@ namespace TestASP.Services
             return await _db.Products.FirstOrDefaultAsync(p => p.Id == id); 
         }
 
-        public async Task<Product?> UpdateProductAsync(int id, string name, decimal price)
+        public async Task<Product?> UpdateProductAsync(int id, string name, decimal price, int categoryId)
         {
             var product = await _db.Products.FirstOrDefaultAsync(p => p.Id == id);
             if (product == null)
@@ -47,6 +46,7 @@ namespace TestASP.Services
             }
             product.Name = name;
             product.Price = price;
+            product.CategoryId = categoryId;
             await _db.SaveChangesAsync();
             return product;
         }

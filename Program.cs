@@ -8,6 +8,7 @@ builder.Services.AddControllers();
 builder.Services.AddSwaggerGen(); 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source=app.db"));
 builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<CategoryService>();
 
 
 var app = builder.Build();

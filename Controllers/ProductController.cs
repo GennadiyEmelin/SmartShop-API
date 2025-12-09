@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Xml.Linq;
+using Microsoft.EntityFrameworkCore;
 using TestASP.DTO;
 using TestASP.Models;
 using TestASP.Services;
@@ -16,11 +16,10 @@ namespace TestASP.Controllers
             _productService = productService;
         }
 
-        [HttpPost]
-        [Route("AddProduct")]
+        [HttpPost("AddProduct")]
         public async Task<IActionResult> AddProduct([FromBody] AddProductDTO productDto)
         {
-            var product = await _productService.AddProductAsync(productDto.Name, productDto.Price);
+            var product = await _productService.AddProductAsync(productDto.Name, productDto.Price, productDto.CategoryId);
             return CreatedAtAction(nameof(GetById), new { id = product.Id }, product);
         }
 
@@ -31,9 +30,9 @@ namespace TestASP.Controllers
         }
 
         [HttpGet("GetById/{id}")]
-        public async Task<ActionResult<Product>> GetById(int Id)
+        public async Task<ActionResult<Product>> GetById(int id)
         { 
-            var product = await _productService.GetProductByIdAsync(Id);
+            var product = await _productService.GetProductByIdAsync(id);
             if (product == null) { return NotFound(); }
             return product;
         }
@@ -41,7 +40,11 @@ namespace TestASP.Controllers
         [HttpPut("UpdateProduct/{id}")]
         public async Task<IActionResult> UpdateProduct(int id, [FromBody] AddProductDTO dto)
         {
-            var updateProduct = await _productService.UpdateProductAsync(id, dto.Name, dto.Price);
+            var updateProduct = await _productService.UpdateProductAsync(id, dto.Name, dto.Price, dto.CategoryId);
+            if (updateProduct == null)
+            {
+                return NotFound();
+            }
             return NoContent();
         }
 
@@ -63,21 +66,20 @@ namespace TestASP.Controllers
             [FromQuery] decimal? minPrice,
             [FromQuery] decimal? maxPrice)
         {
-            var query = await _productService.GetAllProductsAsync();
-            var products = query.AsQueryable(); 
+            var query = _productService.Query();
             if (!string.IsNullOrEmpty(Name))
             {
-                products = products.Where(p => p.Name.Contains(Name, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(p => p.Name.Contains(Name, StringComparison.OrdinalIgnoreCase));
             }
             if (minPrice.HasValue)
             {
-                products = products.Where(p => p.Price >= minPrice.Value);
+                query = query.Where(p => p.Price >= minPrice.Value);
             }
             if (maxPrice.HasValue)
             {
-                products = products.Where(p => p.Price <= maxPrice.Value);
+                query = query.Where(p => p.Price <= maxPrice.Value);
             }
-            return products.ToList();
+            return await query.ToListAsync();
 
         }
 
@@ -97,7 +99,7 @@ namespace TestASP.Controllers
                     _ => query
                 };
             }
-           var result = query.ToList();
+           var result = await query.ToListAsync();
             return Ok(result);
         }
     }
